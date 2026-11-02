@@ -21,6 +21,7 @@ __pycache__/
 # Local datasets
 data/
 datasets/
+docs/
 
 # Model checkpoints and large outputs
 checkpoints/
