@@ -17,11 +17,15 @@ __pycache__/
 .env.*
 !.env.example
 *.pem
+/scripts/ig_scraper/.ig_browser_state.json
 
 # Local datasets
 data/
 datasets/
 docs/
+/scripts/ig_scraper/*.csv
+/scripts/ig_scraper/*.csv.lock
+/scripts/ig_scraper/ig_profile_html/
 
 # Model checkpoints and large outputs
 checkpoints/

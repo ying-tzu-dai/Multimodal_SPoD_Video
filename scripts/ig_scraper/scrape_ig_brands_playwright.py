@@ -19,8 +19,9 @@ from urllib.error import HTTPError, URLError
 from urllib.parse import urlsplit
 from urllib.request import HTTPRedirectHandler, Request, build_opener
 
-DATA = Path(__file__).resolve().parents[1] / "data"
-BROWSER_STATE = DATA / ".ig_browser_state.json"
+SCRAPER_DIR = Path(__file__).resolve().parent
+RESULT_CSV = SCRAPER_DIR.parents[1] / "data" / "ig_brand_info.csv"
+BROWSER_STATE = SCRAPER_DIR / ".ig_browser_state.json"
 HANDLE = re.compile(r"[a-z0-9_.]{1,30}", re.ASCII)
 NUMBER = r"(?:[0-9]{1,3}(?:[, ][0-9]{3})+|[0-9]+)(?:\.[0-9]+)?\s*[kKmMbB萬万億亿]?"
 MULTIPLIER = dict(k=1000, m=1000000, b=1000000000, 萬=10000, 万=10000, 億=100000000, 亿=100000000)
@@ -588,8 +589,8 @@ def collect_batch(args, fields, results, pending, fetch):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--input", type=Path, default=DATA / "brands_in_database.csv")
-    parser.add_argument("--output", type=Path, default=DATA / "ig_brand_info.csv")
+    parser.add_argument("--input", type=Path, default=SCRAPER_DIR / "brands_in_database.csv")
+    parser.add_argument("--output", type=Path, default=RESULT_CSV)
     source = parser.add_mutually_exclusive_group()
     source.add_argument("--offline", action="store_true", help="Read saved HTML without accessing the network.")
     source.add_argument("--login", type=Path, nargs="?", const=BROWSER_STATE, metavar="PATH",
@@ -598,7 +599,7 @@ def main():
                         help="Fetch profiles through Chromium using a session saved with --login.")
     source.add_argument("--export-apify", action="store_true", help="Print Apify input JSON for missing profiles.")
     source.add_argument("--import-apify", type=Path, metavar="CSV", help="Fill missing values from an Apify profile CSV.")
-    parser.add_argument("--html-dir", type=Path, default=DATA / "ig_profile_html")
+    parser.add_argument("--html-dir", type=Path, default=SCRAPER_DIR / "ig_profile_html")
     parser.add_argument(
         "--categories", type=Path,
         help="Supplement categories from a brand_id/brand_category CSV or an Apify profile CSV.",
@@ -642,7 +643,8 @@ def main():
                 parser.error(f"--brand values not in input: {', '.join(sorted(unknown))}")
             brands = selected
         args.output.parent.mkdir(parents=True, exist_ok=True)
-        with args.output.with_name(args.output.name + ".lock").open("a") as lock:
+        lock_dir = SCRAPER_DIR if args.output.resolve() == RESULT_CSV.resolve() else args.output.parent
+        with (lock_dir / (args.output.name + ".lock")).open("a") as lock:
             try:
                 fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
             except BlockingIOError:
